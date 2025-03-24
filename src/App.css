@@ -1,0 +1,61 @@
+* {
+  font-family: 'Poppins', sans-serif;
+}
+.btn{
+    box-shadow: none !important;
+}
+td{
+  padding: 0.8rem !important;
+  color: #383838 !important;
+}
+th{
+  padding: 0.8rem !important;
+    font-weight: 600 !important;
+
+}
+.fixed-width-badge {
+  width: 4.5rem; 
+  text-align: center; 
+  font-size: 10px !important;
+}
+
+/* -------- Custom stale for pagination button used in data-tabels [Start] -------- */
+
+.custom-pagination-btn {
+  border: 1px solid #877bdc !important;
+  color: #877bdc !important;
+  background-color: transparent !important;
+}
+
+.custom-pagination-btn.active {
+  background-color: #877bdc !important;
+  color: white !important;
+}
+
+.custom-pagination-outline-btn {
+    border: 1px solid #877bdc !important;
+  color: #877bdc !important;
+  background-color: transparent !important;
+}
+.complaints-table th,
+.complaints-table td {
+    width: 50%;
+    text-align: left;
+    padding: 10px;
+    vertical-align: middle;
+}
+
+.complaints-table th {
+    font-weight: bold;
+    background-color: #f8f9fa; /* Light gray background for headers */
+}
+/* -------- Custom stale for pagination button used in data-tabels [End] ---------- */
+
+.admin-row td {
+   background-color: #ffeb3b !important;
+}
+/* Add this to your CSS file */
+.admin-req-row td {
+    background-color: #ffeb3b !important;
+}
+

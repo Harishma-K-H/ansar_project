@@ -1,0 +1,465 @@
+import React, { useState, useEffect } from "react";
+import
+{
+  Modal,
+  Box,
+  TextField,
+  Button,
+  MenuItem,
+  ThemeProvider,
+  createTheme,
+} from "@mui/material";
+import axios from "axios";
+import BASE_URL from "../../../utils/baseUrl";
+import { toast } from "react-toastify";
+
+const UserAdd = ({ open, handleClose }) =>
+{
+  const [formData, setFormData] = useState({
+    name: "",
+    department: "",
+    mobile_number: "",
+    institution: "",
+    staff_id: "",
+    role: "",
+    section_for_staff: "",
+  });
+
+  const [departments, setDepartments] = useState([]);
+  const [institutions, setInstitutions] = useState([]);
+  const roles = ["Department Head", "Tech Support"];
+  const [MobileNumberError, setMobileNumberError] = useState("");
+  const [staffIdError, setStaffIdError] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
+  const [formErrors, setFormErrors] = useState({
+    name: false,
+    staff_id: false,
+    role: false,
+    department: false,
+    institution: false,
+    section_for_staff: false,
+    mobile_number: false,
+  });
+
+  useEffect(() =>
+  {
+    // Fetch institutions
+    axios
+      .get(`${ BASE_URL }/api/institutions/`)
+      .then((response) => setInstitutions(response.data))
+      .catch((error) => console.error("Error fetching institutions:", error));
+  }, []);
+
+  useEffect(() =>
+  {
+    if (formData.institution)
+    {
+      // Fetch departments for the selected institution
+      axios
+        .get(`${ BASE_URL }/api/departments/${ formData.institution }/`)
+        .then((response) => setDepartments(response.data))
+        .catch((error) => console.error("Error fetching departments:", error));
+    } else
+    {
+      setDepartments([]);
+    }
+  }, [formData.institution]);
+
+  const handleChange = (e) =>
+  {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSave = () =>
+  {
+    const errors = {
+      name: !formData.name,
+      staff_id: !formData.staff_id,
+      role: !formData.role,
+      department: !formData.department,
+      institution: !formData.institution,
+      section_for_staff: !formData.section_for_staff,
+      mobile_number: !formData.mobile_number,
+    };
+
+    setFormErrors(errors);
+
+    // Check if any field has an error
+    if (Object.values(errors).some((error) => error))
+    {
+      return; // Stop submission if there are errors
+    }
+
+    // Proceed with saving (Submit the form)
+    console.log("Form submitted successfully!", formData);
+  };
+  const handleRoleChange = (e) =>
+  {
+    const selectedRole = e.target.value;
+    setFormData({
+      ...formData,
+      role: selectedRole,
+      // If role is 'Tech Support', set institution and department to null
+      institution: selectedRole === "Tech Support" ? "" : formData.institution,
+      department: selectedRole === "Tech Support" ? "" : formData.department,
+      section_for_staff: selectedRole === "Tech Support" ? formData.section_for_staff : "",
+    });
+  };
+
+  const checkMobileNumberExists = async (MobileNumber) =>
+  {
+    try
+    {
+      const response = await axios.get(`${ BASE_URL }/api/check-mobile/`);
+
+      if (response.data.mobile_numbers.includes(MobileNumber))
+      {
+        setMobileNumberError("This Mobile Number is already in use.");
+      } else
+      {
+        setMobileNumberError(""); // Clear error if available
+      }
+    } catch (error)
+    {
+      console.error("Error checking Staff ID:", error);
+    }
+  };
+
+  const handleMobileChange = (e) =>
+  {
+    const { name, value } = e.target;
+
+    if (name === "mobile_number")
+    {
+      // Allow only digits and prevent more than 10 characters
+      if (/^\d*$/.test(value) && value.length <= 10)
+      {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      
+
+        if (value.length === 10)
+        {
+          checkMobileNumberExists(value); // Check only when it's 10 digits
+        }
+        else
+        {
+          setMobileNumberError(""); // Clear error if user modifies input
+        }
+      }
+    }
+  };
+
+  const checkStaffIdExists = async (staffId) =>
+  {
+    try
+    {
+      const response = await axios.get(`${ BASE_URL }/api/check-staff-id/`);
+
+      if (response.data.staff_ids.includes(staffId))
+      {
+        setStaffIdError("This Staff ID is already in use.");
+      } else
+      {
+        setStaffIdError(""); // Clear error if available
+      }
+    } catch (error)
+    {
+      console.error("Error checking Staff ID:", error);
+    }
+  };
+  const handleStaffIdChange = (e) =>
+  {
+    const { name, value } = e.target;
+
+    // Restrict first two characters to be alphabetic
+    if (name === "staff_id")
+    {
+      // Ensure the first two characters are alphabetic
+      if (value.length === 1 && !/^[A-Za-z]$/.test(value))
+      {
+        // setStaffIdError("The first two characters must be alphabetic letters.");
+        return; // Block input if the first character is not a letter
+      }
+      // Restrict first character to be a letter
+      if (value.length === 1 && /^[0-9]$/.test(value))
+      {
+        setStaffIdError("The first two characters must be alphabetic letters.");
+        return; // Block input if the first character is a number
+      }
+
+      if (value.length === 2 && !/^[A-Za-z]{2}$/.test(value))
+      {
+        setStaffIdError("The first two characters must be alphabetic letters.");
+        return; // Block input if the first two characters are not letters
+      }
+      // Ensure characters after the first two are numeric only
+      if (value.length > 2 && !/^[A-Za-z]{2}[0-9]*$/.test(value))
+      {
+        return;
+      }
+
+      if (value.length > 6)
+      {
+        return;
+      }
+      else
+      {
+        setStaffIdError(""); // Clear error when valid
+      }
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      checkStaffIdExists(value);
+    }
+  };
+
+  const resetForm = () =>
+  {
+    setFormData({
+      name: "",
+      department: "",
+      mobile_number: "",
+      institution: "",
+      staff_id: "",
+      role: "",
+      section_for_staff: "",
+    });
+
+    setFormErrors({   // Reset all errors
+      name: false,
+      staff_id: false,
+      role: false,
+      department: false,
+      institution: false,
+      section_for_staff: false,
+      mobile_number: false,
+    });
+
+    setStaffIdError(""); // Reset staff ID error
+    setMobileNumberError("");
+  };
+
+
+  const handleCloseModal = () =>
+  {
+    resetForm(); // Reset form fields
+    handleClose(); // Close the modal
+  };
+  const saveData = () =>
+  {
+    const errors = {
+      name: !formData.name,
+      staff_id: !formData.staff_id,
+      role: !formData.role,
+      department: !formData.department,
+      institution: !formData.institution,
+      section_for_staff: !formData.section_for_staff,
+      mobile_number: !formData.mobile_number,
+    };
+
+    setFormErrors(errors); // Update state to highlight empty fields
+
+    // Check if any field has an error
+    if (Object.values(errors).some((error) => error))
+    {
+      // toast.warning("All fields are required!"); // Show warning message
+      // return; // Stop submission if there are errors
+    }
+
+    // If validation passes, proceed with saving
+    const requestData = {
+      name: formData.name,
+      role: formData.role,
+      staff_id: formData.staff_id,
+      institution_id: formData.role === "Tech Support" ? null : formData.institution,
+      department_id: formData.role === "Tech Support" ? null : formData.department,
+      section_for_staff: formData.role === "Tech Support" ? formData.section_for_staff : null,
+      mobile_number: formData.mobile_number,
+    };
+
+    axios
+      .post(`${ BASE_URL }/api/users/create/`, requestData)
+      .then((response) =>
+      {
+        console.log("User added successfully:", response);
+        toast.success("User added successfully!");
+        window.location.reload();
+        handleClose();
+      })
+      .catch((error) =>
+      {
+        console.error("Error adding user:", error.response?.data);
+        toast.error("Error:All fields are required");
+      });
+  };
+
+  const customTheme = createTheme({
+    palette: {
+      primary: {
+        main: "#877bdc",
+      },
+    },
+  });
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: 600,
+    bgcolor: "background.paper",
+    boxShadow: 24,
+    p: 4,
+    borderRadius: "8px",
+  };
+
+  return (
+    <ThemeProvider theme={customTheme}>
+      <Modal open={open} onClose={handleClose}>
+        <Box sx={style}>
+          <h5>Add User</h5>
+          <TextField
+            fullWidth
+            label="Name"
+            name="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            variant="outlined"
+            className="mb-3"
+            error={formErrors.name} // Highlight red if error
+            helperText={formErrors.name ? "This field is required" : ""}
+          />
+          <TextField
+            fullWidth
+            label="Staff ID"
+            name="staff_id"
+            value={formData.staff_id}
+            onChange={handleStaffIdChange}
+            variant="outlined"
+            className="mb-3"
+            error={
+              formErrors.staff_id || // Highlight red if the field is empty
+              (formData.staff_id.length > 0 && !/^[A-Za-z]{2}[A-Za-z0-9]*$/.test(formData.staff_id)) ||
+              !!staffIdError // Check if the staffIdError state has an error message
+            }
+            helperText={
+              formErrors.staff_id
+                ? "This field is required"
+                : formData.staff_id.length > 0 && !/^[A-Za-z]{2}[A-Za-z0-9]*$/.test(formData.staff_id)
+                  ? "Staff ID must start with first 2 alphabetic letters"
+                  : staffIdError // Show error if Staff ID already exists
+            }
+          />
+
+          <TextField
+            fullWidth
+            select
+            label="Role"
+            name="role"
+            value={formData.role}
+            onChange={handleRoleChange} // Change role handler
+            variant="outlined"
+            className="mb-3"
+            error={formErrors.role} // Highlight red if error
+            helperText={formErrors.role ? "This field is required" : ""}
+          >
+            {roles.map((role, index) => (
+              <MenuItem key={index} value={role}>
+                {role}
+              </MenuItem>
+            ))}
+          </TextField>
+          {(formData.role === "Department Head" || formData.role === "Staff") && (
+            <>
+              <TextField
+                fullWidth
+                select
+                label="Institution"
+                name="institution"
+                value={formData.institution}
+                onChange={handleChange}
+                variant="outlined"
+                className="mb-3"
+                error={formErrors.institution} // Highlight red if error
+                helperText={formErrors.institution ? "This field is required" : ""}
+              >
+                {institutions.map((inst) => (
+                  <MenuItem key={inst.id} value={inst.id}>
+                    {inst.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                fullWidth
+                select
+                label="Department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                variant="outlined"
+                className="mb-3"
+                error={formErrors.department} // Highlight red if error
+                helperText={formErrors.department ? "This field is required" : ""}
+                disabled={!formData.institution}
+              >
+                {departments.map((dept) => (
+                  <MenuItem key={dept.id} value={dept.id}>
+                    {dept.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </>
+          )}
+          {formData.role === "Tech Support" && (
+            <TextField
+              fullWidth
+              select
+              label="Section"
+              name="section_for_staff"
+              value={formData.section_for_staff}
+              onChange={handleChange}
+              variant="outlined"
+              className="mb-3"
+              error={formErrors.section_for_staff} // Highlight red if error
+              helperText={formErrors.section_for_staff ? "This field is required" : ""}
+              required
+            >
+              <MenuItem value="IT">IT</MenuItem>
+              <MenuItem value="Electrical & Maintanance">Electrical and Maintanance</MenuItem>
+            </TextField>
+          
+          )}
+          <TextField
+            fullWidth
+            label="Mobile No"
+            name="mobile_number"
+            value={formData.mobile_number}
+            onChange={handleMobileChange}
+            variant="outlined"
+            error={!!MobileNumberError || !!formErrors.mobile_number} // Show error if message exists
+            helperText={MobileNumberError || (formErrors.mobile_number ? "This field is required" : "")} // Show appropriate error message
+          />
+
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+            <Button variant="outlined" onClick={handleCloseModal} sx={{ mr: 2 }}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={saveData}>
+              Save
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+    </ThemeProvider>
+  );
+};
+
+export default UserAdd;

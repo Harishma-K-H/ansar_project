@@ -1,0 +1,39 @@
+Project Overall
+------------------------------------
+
+Backend : django (connect with api : src/utils/baseUrl.js )
+
+
+Pwa : ------------------------------------------------
+
+Used custom pwa setup
+
+
+Structure : ------------------------------------------
+
+Admin Folder : for admin
+
+User Folder : for - Department Head -  &  - Staff -
+
+Staff Folder : for Tech Support (rename folder & file & routes)
+
+
+
+styles : ---------------------------------------------
+
+Mui Theme .
+
+Boostrap .
+
+
+important : -------------------------------------------
+
+section_for_staff(User Model) = is equal to =  type_of_request(ServiceRequest Model) & type_of_issue(Complaints Model)
+
+
+
+
+
+
+
+
